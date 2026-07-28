@@ -1,0 +1,46 @@
+apiVersion: automation.cloudbees.io/v1alpha1
+kind: workflow
+name: deployer
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        required: true
+      manifest:
+        type: string
+        required: true
+
+jobs:
+  taskflow-db:
+    if: ${{ fromJSON(inputs.manifest)['taskflow-db']['docker.io/mock/database'].deploy }}
+    uses: Cara/taskflow-db/.cloudbees/workflows/deploy.yaml
+    vars: inherit
+    secrets: inherit
+    with:
+      artifact-id: ${{ fromJSON(inputs.manifest)['taskflow-db']['docker.io/mock/database'].id }}
+      version: ${{ fromJSON(inputs.manifest)['taskflow-db']['docker.io/mock/database'].version }}
+      environment: ${{ inputs.environment }}
+
+  taskflow-backend:
+    needs: taskflow-db
+    if: ${{ fromJSON(inputs.manifest)['taskflow-backend']['docker.io/mock/backend'].deploy }}
+    uses: Cara/taskflow-backend/.cloudbees/workflows/deploy.yaml
+    vars: inherit
+    secrets: inherit
+    with:
+      artifact-id: ${{ fromJSON(inputs.manifest)['taskflow-backend']['docker.io/mock/backend'].id }}
+      version: ${{ fromJSON(inputs.manifest)['taskflow-backend']['docker.io/mock/backend'].version }}
+      environment: ${{ inputs.environment }}
+
+  taskflow-frontend:
+    needs: taskflow-backend
+    if: ${{ fromJSON(inputs.manifest)['taskflow-frontend']['docker.io/mock/frontend'].deploy }}
+    uses: Cara/taskflow-frontend/.cloudbees/workflows/deploy.yaml
+    vars: inherit
+    secrets: inherit
+    with:
+      artifact-id: ${{ fromJSON(inputs.manifest)['taskflow-frontend']['docker.io/mock/frontend'].id }}
+      version: ${{ fromJSON(inputs.manifest)['taskflow-frontend']['docker.io/mock/frontend'].version }}
+      environment: ${{ inputs.environment }}
