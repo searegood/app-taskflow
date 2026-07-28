@@ -15,7 +15,7 @@ on:
 jobs:
   taskflow-db:
     if: ${{ fromJSON(inputs.manifest)['taskflow-db']['docker.io/mock/database'].deploy }}
-    uses: Cara/taskflow-db/.cloudbees/workflows/deploy.yaml
+    uses: searegood/taskflow-db/.cloudbees/workflows/deploy.yaml
     vars: inherit
     secrets: inherit
     with:
@@ -26,7 +26,7 @@ jobs:
   taskflow-backend:
     needs: taskflow-db
     if: ${{ fromJSON(inputs.manifest)['taskflow-backend']['docker.io/mock/backend'].deploy }}
-    uses: Cara/taskflow-backend/.cloudbees/workflows/deploy.yaml
+    uses: searegood/taskflow-backend/.cloudbees/workflows/deploy.yaml
     vars: inherit
     secrets: inherit
     with:
@@ -37,7 +37,7 @@ jobs:
   taskflow-frontend:
     needs: taskflow-backend
     if: ${{ fromJSON(inputs.manifest)['taskflow-frontend']['docker.io/mock/frontend'].deploy }}
-    uses: Cara/taskflow-frontend/.cloudbees/workflows/deploy.yaml
+    uses: searegood/taskflow-frontend/.cloudbees/workflows/deploy.yaml
     vars: inherit
     secrets: inherit
     with:
