@@ -1,0 +1,68 @@
+apiVersion: automation.cloudbees.io/v1alpha1
+kind: workflow
+name: Release WF
+
+on:
+  workflow_dispatch:
+    inputs:
+      manifest:
+        type: string
+        required: true
+        description: System-generated manifest for releases
+
+metadata:
+  stages/v1alpha1:
+    - name: DEV
+      jobs:
+        - DEV
+        - Approve
+    - name: STAGING
+      jobs:
+        - STAGING
+    - name: PROD
+      jobs:
+        - PROD
+
+jobs:
+  DEV:
+    environment: DEV
+    uses: ./.cloudbees/workflows/deployer.yaml
+    vars: inherit
+    secrets: inherit
+    with:
+      manifest: ${{ inputs.manifest }}
+      environment: ${{ job.environment }}
+
+  Approve:
+    needs: DEV
+    timeout-minutes: 4320
+    delegates: cloudbees-io/manual-approval/custom-job.yml@v1
+    with:
+      disallowLaunchByUser: false
+      notifyAllEligibleUsers: false
+      #Intentionally making this blank so you can approve your own for this workshop. 
+      #The approvers field supports both user IDs and email addresses when needed
+      approvers: ""
+      approvalInputs: |
+        Comment:
+          type: string
+
+  STAGING:
+    needs: Approve
+    environment: STAGING
+    uses: ./.cloudbees/workflows/deployer.yaml
+    vars: inherit
+    secrets: inherit
+    with:
+      manifest: ${{ inputs.manifest }}
+      environment: ${{ job.environment }}
+
+  PROD:
+    needs: STAGING
+    environment: PROD
+    uses: ./.cloudbees/workflows/deployer.yaml
+    vars: inherit
+    secrets: inherit
+    with:
+      manifest: ${{ inputs.manifest }}
+      environment: ${{ job.environment }}
